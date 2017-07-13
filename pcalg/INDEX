@@ -1,0 +1,122 @@
+EssGraph-class          Class '"EssGraph"'
+GaussL0penIntScore-class
+                        Class '"GaussL0penIntScore"'
+GaussL0penObsScore-class
+                        Class '"GaussL0penObsScore"'
+GaussParDAG-class       Class '"GaussParDAG"' of Gaussian Causal Models
+LINGAM                  Linear non-Gaussian Acyclic Models (LiNGAM)
+ParDAG-class            Class '"ParDAG"' of Parametric Causal Models
+Score-class             Virtual Class "Score"
+amatType                Types and Display of Adjacency Matrices in
+                        Package 'pcalg'
+backdoor                Find Set Satisfying the Generalized Backdoor
+                        Criterion (GBC)
+beta.special            Compute set of intervention effects
+beta.special.pcObj      Compute set of intervention effects in a fast
+                        way
+binCItest               G square Test for (Conditional) Independence of
+                        Binary Variables
+checkTriple             Check Consistency of Conditional Independence
+                        for a Triple of Nodes
+compareGraphs           Compare two graphs in terms of TPR, FPR and TDR
+condIndFisherZ          Test Conditional Independence of Gaussians via
+                        Fisher's Z
+corGraph                Computing the correlation graph
+dag2cpdag               Convert a DAG to a CPDAG
+dag2essgraph            Convert a DAG to an Essential Graph
+dag2pag                 Convert a DAG with latent variables into a PAG
+disCItest               G square Test for (Conditional) Independence of
+                        Discrete Variables
+dreach                  Compute D-SEP(x,y,G)
+dsep                    Test for d-separation in a DAG
+dsepTest                Test for d-separation in a DAG
+fci                     Estimate a PAG by the FCI Algorithm
+fciAlgo-class           Class "fciAlgo" of FCI Algorithm Results
+fciPlus                 Estimate a PAG by the FCI+ Algorithm
+find.unsh.triple        Find all Unshielded Triples in an Undirected
+                        Graph
+gAlgo-class             Class '"gAlgo"'
+gac                     Test If Set Satisfies Generalized Adjustment
+                        Criterion (GAC)
+gds                     Greedy DAG Search to Estimate Markov
+                        Equivalence Class of DAG
+ges                     Estimate the Markov equivalence class of a DAG
+                        using GES
+getGraph                Get the "graph" Part or Aspect of R Object
+getNextSet              Iteration through a list of all combinations of
+                        choose(n,k)
+gies                    Estimate Interventional Markov Equivalence
+                        Class of a DAG by GIES
+gmB                     Graphical Model 5-Dim Binary Example Data
+gmD                     Graphical Model Discrete 5-Dim Example Data
+gmG                     Graphical Model 8-Dimensional Gaussian Example
+                        Data
+gmI                     Graphical Model 7-dim IDA Data Examples
+gmInt                   Graphical Model 8-Dimensional Interventional
+                        Gaussian Example Data
+gmL                     Latent Variable 4-Dim Graphical Model Data
+                        Example
+ida                     Estimate Multiset of Possible Total Causal
+                        Effects
+idaFast                 Multiset of Possible Total Causal Effects for
+                        Several Target Var.s
+iplotPC                 Plotting a pcAlgo object using the package
+                        igraph
+jointIda                Estimate Multiset of Possible Total Joint
+                        Effects
+legal.path              Check if a 3-node-path is Legal
+mat2targets             Conversion between an intervention matrix and a
+                        list of intervention targets
+mcor                    Compute (Large) Correlation Matrix
+pag2magAM               Transform a PAG into a MAG in the Corresponding
+                        Markov Equivalence Class
+pc                      Estimate the Equivalence Class of a DAG using
+                        the PC Algorithm
+pc.cons.intern          Utility for conservative and majority rule in
+                        PC and FCI
+pcAlgo                  PC-Algorithm [OLD]: Estimate Skeleton or
+                        Equivalence Class of a DAG
+pcAlgo-class            Class "pcAlgo" of PC Algorithm Results, incl.
+                        Skeleton
+pcSelect                PC-Select: Estimate subgraph around a response
+                        variable
+pcSelect.presel         Estimate Subgraph around a Response Variable
+                        using Preselection
+pcorOrder               Compute Partial Correlations
+pdag2allDags            Enumerate All DAGs in a Markov Equivalence
+                        Class
+pdag2dag                Extend a Partially Directed Acyclic Graph
+                        (PDAG) to a DAG
+pdsep                   Estimate Final Skeleton in the FCI algorithm
+plotAG                  Plot partial ancestral graphs (PAG)
+plotSG                  Plot the subgraph around a Specific Node in a
+                        Graph Object
+possibleDe              Find possible descendants on definite status
+                        paths.
+qreach                  Compute Possible-D-SEP(x,G) of a node x in a
+                        PDAG G
+r.gauss.pardag          Generate a Gaussian Causal Model Randomly
+randDAG                 Random DAG Generation
+randomDAG               Generate a Directed Acyclic Graph (DAG)
+                        randomly
+rfci                    Estimate an RFCI-PAG using the RFCI Algorithm
+rmvDAG                  Generate Multivariate Data according to a DAG
+rmvnorm.ivent           Simulate from a Gaussian Causal Model
+shd                     Compute Structural Hamming Distance (SHD)
+showAmat                Show Adjacency Matrix of pcAlgo object
+showEdgeList            Show Edge List of pcAlgo object
+simy                    Estimate Interventional Markov Equivalence
+                        Class of a DAG
+skeleton                Estimate (Initial) Skeleton of a DAG using the
+                        PC / PC-Stable Algorithm
+trueCov                 Covariance matrix of a DAG.
+udag2apag               Last step of RFCI algorithm: Transform
+                        partially oriented graph into RFCI-PAG
+udag2pag                Last steps of FCI algorithm: Transform Final
+                        Skeleton into FCI-PAG
+udag2pdag               Last PC Algorithm Step: Extend Object with
+                        Skeleton to Completed PDAG
+unifDAG                 Uniform Sampling of Directed Acyclic Graphs
+                        (DAG)
+visibleEdge             Check visible edge.
+wgtMatrix               Weight Matrix of a Graph, e.g., a simulated DAG
