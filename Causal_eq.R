@@ -41,7 +41,7 @@ g = g_PC_reduced
 hidden = c(9,10)
 g = set.edge.attribute(g,"description",hidden,"U")
 
-causal_effect = causal.effect(y="Y",x="PEEP",z =c("V_T","RR","FO2","RR"),G=g, simp=F, steps=F)
+causal_effect = causal.effect(y="Y",x=c("V_T","PP"),z =c("FO2","PEEP","RR"),G=g, simp=F, steps=F)
 # causal_effect = causal.effect(y="Y",x="NMBA",z =c("V_T", "RR","FO2"),G=g, simp=T)
 # causal_effect = causal.effect(y="Y",x="NMBA",z =NULL,G=g, simp=T)
 print(V(g))

@@ -10,15 +10,20 @@ computing = T
 
 train_Y = F
 train_PCO2 = F
+train_RR = F
 train_PO2 = F
+train_PP = F
 train_PIP = F
 train_MV = F
-train_SO2 = F
+train_SO2 = F 
+train_VT = F 
 train_FO2 = F
 train_PEEP = F
-train_pH = F
+train_pH = F 
+
 
 df <- read.csv("Data/reduce_final_R.csv")
+df = subset(df, factor_to_numeric(df$Sev)<150)
 ID = df$SUBJECT_ID
 KG = factor_to_numeric(df$WEIGHT)
 Age = as.numeric(df$AGE)
@@ -51,9 +56,9 @@ Y = as.numeric(df$SURVIVAL)
 # 1. Build a model for f(Y | Y_given)
 ## Y_given = [ Kg,Age,Sex,NMBA,Sev,FO2,PEEP,V_T,PP,RR,PIP,MV,SO2,PO2,PCO2,pH ]
 if (train_Y == T){
-  param = list(booster="gbtree",eta = 0.5, gamma = 0.5, max_depth = 10, 
-               subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
-  nround = 300
+  param = list(booster="gbtree",eta = 0.05, gamma = 0.5, max_depth = 10, 
+               subsample = 0.5, lambda=0.5, alpha=0.5, verbose=0)
+  nround = 1000
   
   Y_given = cbind( KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,PIP,MV,SO2,PO2,PCO2,pH )
   print("Y Run!")
@@ -72,11 +77,24 @@ if (train_PCO2 == T){
   PCO2.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 } 
 
-# 3. Build a model for f(PO2 | PO2_given)
-if (train_PO2 == T){
-  param = list(booster="gbtree",eta = 0.2, gamma = 0.5, max_depth = 15, 
+# 3. Build a model for f(RR | RR_given)
+if (train_RR == T){
+  param = list(booster="gbtree",eta = 0.01, gamma = 0.5, max_depth = 15,
                subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
-  nround = 300
+  nround = 500
+  RR_given = cbind(KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP)
+  Given = RR_given[which(!is.na(RR))]
+  Data = RR[which(!is.na(RR))]
+  print("RR Run!")
+  RR.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
+}
+
+
+# 4. Build a model for f(PO2 | PO2_given)
+if (train_PO2 == T){
+  param = list(booster="gbtree",eta = 0.01, gamma = 0.5, max_depth = 15, 
+               subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
+  nround = 2000
   PO2_given = cbind(KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,PIP,MV,SO2)
   Given = PO2_given[which(!is.na(PO2))]
   Data = PO2[which(!is.na(PO2))]
@@ -84,7 +102,21 @@ if (train_PO2 == T){
   PO2.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 } 
 
-# 4. Build a model for f(PIP | PIP_given)
+
+# 5. Build a model for f(PP | PP_given)
+if (train_PP == T){
+  param = list(booster="gbtree",eta = 0.1, gamma = 0.5, max_depth = 15, 
+               subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
+  nround = 500
+  PP_given = cbind(KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT)
+  Given = PP_given[which(!is.na(PP))]
+  Data = PP[which(!is.na(PP))]
+  print("PP Run!")
+  PP.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
+} 
+
+
+# 6. Build a model for f(PIP | PIP_given)
 if (train_PIP == T){
   param = list(booster="gbtree",eta = 0.1, gamma = 0.5, max_depth = 15, 
                subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
@@ -96,7 +128,8 @@ if (train_PIP == T){
   PIP.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 } 
 
-# 5. Build a model for f(MV | MV_given)
+
+# 7. Build a model for f(MV | MV_given)
 if (train_MV == T){
   param = list(booster="gbtree",eta = 0.1, gamma = 0.5, max_depth = 15, 
                subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
@@ -108,7 +141,8 @@ if (train_MV == T){
   MV.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 } 
 
-# 6. Build a model for f(SO2 | SO2_given)
+
+# 8. Build a model for f(SO2 | SO2_given)
 if (train_SO2 == T){
   param = list(booster="gbtree",eta = 0.1, gamma = 0.5, max_depth = 15, 
                subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
@@ -120,7 +154,22 @@ if (train_SO2 == T){
   SO2.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 } 
 
-# 7. Build a model for f(FO2 | FO2_given), NUMERATOR 
+
+# 9. Build a model for f(VT | VT_given)
+## where PEEP_given = [KG, Age, NMBA, Sev, FO2]
+if (train_VT == T){
+  param = list(booster="gbtree",eta = 0.02, gamma = 0, max_depth = 15, 
+               subsample = 0.5, lambda=0.5, alpha=0.5, verbose=0)
+  nround = 100
+  VT_given = cbind(KG,Age,Sex,NMBA,Sev,FO2,VT)
+  Given = VT_given[which(!is.na(VT))]
+  Data = VT[which(!is.na(VT))]
+  print("VT Run!")
+  VT.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
+}
+
+
+# 10. Build a model for f(FO2 | FO2_given), NUMERATOR 
 ## where FO2_given = [Age, Sev, NMBA]
 if (train_FO2 == T){
   param = list(booster="gbtree",eta = 1, gamma = 0, max_depth = 5, 
@@ -133,7 +182,7 @@ if (train_FO2 == T){
   FO2.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 }
 
-# 8. Build a model for f(PEEP | PEEP_given)
+# 11. Build a model for f(PEEP | PEEP_given)
 ## where PEEP_given = [KG, Age, NMBA, Sev, FO2]
 if (train_PEEP == T){
   param = list(booster="gbtree",eta = 0.02, gamma = 0, max_depth = 15, 
@@ -146,7 +195,8 @@ if (train_PEEP == T){
   PEEP.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 }
 
-# 9. Build a model for f(pH | pH_given)
+# 12. Build a model for f(pH | pH_given)
+## where pH_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,PIP,MV,SO2,PCO2]
 if (train_pH == T){
   param = list(booster="gbtree",eta = 0.01, gamma = 0.5, max_depth = 15, 
                subsample = 0.7, lambda=0.5, alpha=0.5, verbose=0)
@@ -159,49 +209,73 @@ if (train_pH == T){
 } 
 
 
+# PCO2: Diff ~ Norm, mean = 0, sd = 9
+# RR: abs(log(abs(Diff))) ~ logis, loc=1.4, scale = 0.4
+# PO2: log(abs(Diff)) ~ Norm, mean 3.5, sd=1.3
+# PP: abs(Diff) ~ LN, meanlog=0.8, sdlog=1.21
+# PIP: Diff ~ logis, loc = 0, scale=3.5
+# MV: Diff ~ Norm, mean = 0, sd = 3
+# SO2: abs(Diff) ~ gamma(1,0.4)
+# VT: abs(log(abs(Diff))) ~ gamma, shape=1.2, rate=1.5
+# FO2: log(abs(Diff)) ~ Norm, mean=-2.3, sd=1
+# PEEP: abs(Diff) ~ gamma, shape = 0.25, rate = 0.4
+# pH: abs(log(abs(Diff))),gamma // shape:9.4, rate = 3.3
 
 
 
 
 
+
+
+
+
+
+# 5. Find Fit (example: PEEP)
 if (fitting == T){
-  Model = pH.cond
-  given = pH_given
-  Data = pH
+  Model = PEEP.cond
+  given = PEEP_given
+  Data = PEEP
   
   Fit = predict(Model,data.matrix(given))
   Diff = Data - Fit
   Diff = Diff[which(!is.na(Diff))]
   
   fit_fun = fitdist(Diff,'norm')
-  # d_FO2 = density(Diff)
+  d_FO2 = density(Diff)
   # descdist(log(Fit), discrete=FALSE)
 }
 
-# PCO2: Diff ~ Norm, mean = 0, sd = 9
-# PO2: log(abs(Diff)) ~ Norm, mean 3.5, sd=1.3
-# PIP: Diff ~ logis, loc = 0, scale=3.5
-# MV: Diff ~ Norm, mean = 0, sd = 3
-# SO2: abs(Diff) ~ gamma(1,0.4)
-# FO2: log(abs(Diff)) ~ Norm, mean=-2.3, sd=1
-# PEEP abs(Diff) ~ gamma, 0.52, 0.4
-# pH: abs(log(abs(Diff))),gamma // shape:9.4, rate = 3.3
 
 
 
+# 6. Computation of statistics - VT, PP 
+## Intervention? True! 
 if (computing == T){  
   N = 8587
-  case_VT = T
-  case_PEEP = T
-  case_PP = T
-  case_RR = T 
   
   ## Variable fixation 
+  NMBA_val = 0
+  
   VT_val = 7 # (6,12)
   PP_val = 30 # (30,50)
   PP_ctrl_limit = PP_val # (30,50)
   FiO2s = c(0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
-  PEEPs = c(5,8,10,10,12,14,16)
+  
+  ## If old 
+  PEEPs = c(5,8,10,10,12,14,16) # Conv
+  PEEP_min = 5 
+  PEEP_max_min = 18 
+  PEEP_max_max = 24   
+  
+  ## If new 
+  Experiment = F
+  
+  if (Experiment == T){
+    PEEPs = c(12,14,16,20,20,22,22) # New 
+    PEEP_min = 12 
+    PEEP_max_min = 22 
+    PEEP_max_max = 24   
+  }
   
   sample_N = 100
   NMBA_N = sample(1:531,sample_N)
@@ -214,7 +288,7 @@ if (computing == T){
     # Added and divided for adjusting. 
     sum_numer = 0
     sum_denom = 0
-
+    
     for (j in samples){
       # Adjusting setting for Y
       ## Adjusting = [Sex, KG, Sev, Age, NMBA, ]
@@ -225,7 +299,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sev'] = Sev[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         
         # Intervention seteting 
         if (!is.na(data_sub['VT'])){ data_sub['VT'] = VT_val }
@@ -243,11 +317,11 @@ if (computing == T){
             next
           }
           if (sub_FO2 < 0.3){
-            data_sub['PEEP'] = min(5, data_sub['PEEP'])
+            data_sub['PEEP'] = min(PEEP_min, data_sub['PEEP'])
           }
           else if (sub_FO2 > 0.9){
-            data_sub['PEEP'] = min(24, data_sub['PEEP'])
-            data_sub['PEEP'] = max(18, data_sub['PEEP'])
+            data_sub['PEEP'] = min(PEEP_max_max, data_sub['PEEP'])
+            data_sub['PEEP'] = max(PEEP_max_min, data_sub['PEEP'])
           }
           else if (!is.na(sub_FO2)){
             data_sub['PEEP'] = PEEPs[which(FiO2s == sub_FO2)]
@@ -257,14 +331,11 @@ if (computing == T){
           }
         }
         if (!is.na(data_sub['RR'])){
-          if (!is.na(data_sub['RR'] )){
-            data_sub['RR'] = max(6,data_sub['RR'])
-            data_sub['RR'] = min(35, data_sub['RR'])
-          }else{
-            next
-          }
+          data_sub['RR'] = max(6,data_sub['RR'])
+          data_sub['RR'] = min(35, data_sub['RR'])
         }
-  
+        if (!is.na(data_sub['NMBA'])){ data_sub['NMBA'] = NMBA_val }
+        
         # Probability computation 
         Model = Y.cond
         prob_y = predict(Model, t(as.matrix(data_sub)))
@@ -282,7 +353,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         # Intervention seteting 
@@ -329,8 +400,66 @@ if (computing == T){
         next
       }
       
+      
       ##############################################################################
-      # 3. Adjusting setting for PO2 
+      # 3. Adjusting setting for RR
+      ## Adjusting = [KG,Age,Sex,NMBA,Sev]
+      ## RR_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP]
+      if (!is.na(RR[i])){
+        data_sub = RR_given[i,]
+        data_sub['KG'] = KG[j]
+        data_sub['Age'] = Age[j]
+        data_sub['Sex'] = Sex[j]
+        data_sub['NMBA'] = NMBA_val
+        data_sub['Sev'] = Sev[j]
+        
+        # Intervention seteting
+        if (!is.na(data_sub['VT'])){ data_sub['VT'] = VT_val }
+        if (!is.na(data_sub['PP'])){
+          if (data_sub['PP'] >= PP_ctrl_limit){
+            data_sub['PP'] = PP_val
+          }
+          else{
+            data_sub['PP'] = data_sub['PP']
+          }
+        }
+        if (!is.na(data_sub['PEEP'])){
+          sub_FO2 = round(Y_given[i,]['FO2'],1)
+          if (is.nan(sub_FO2) || is.na(sub_FO2)){
+            next
+          }
+          if (sub_FO2 < 0.3){
+            data_sub['PEEP'] = min(PEEP_min, data_sub['PEEP'])
+          }
+          else if (sub_FO2 > 0.9){
+            data_sub['PEEP'] = min(PEEP_max_max, data_sub['PEEP'])
+            data_sub['PEEP'] = max(PEEP_max_min, data_sub['PEEP'])
+          }
+          else if (!is.na(sub_FO2)){
+            data_sub['PEEP'] = PEEPs[which(FiO2s == sub_FO2)]
+          }
+          else{
+            data_sub['PEEP'] = data_sub['PEEP']
+          }
+        }
+        if (!is.na(RR[i])){
+          RR[i] = max(6,RR[i])
+          RR[i] = min(35, RR[i])
+        }
+        
+        # ProbabilitpH computation
+        acc_mu = 1.4
+        acc_sd = 0.4
+        Model = RR.cond
+        Obs = abs( log( abs( RR[i]-predict(Model, t(as.matrix(data_sub))) ) ) )
+        prob_RR = dlogis(Obs, location = acc_mu, scale = acc_sd )
+      }else{
+        next
+      }
+      
+      
+      ##############################################################################
+      # 4. Adjusting setting for PO2 
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## PO2_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,PIP,MV,SO2]
       if (!is.nan(PO2[i])){
@@ -338,7 +467,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -374,7 +503,7 @@ if (computing == T){
         if (!is.na(data_sub['RR'])){
           data_sub['RR'] = max(6,data_sub['RR'])
           data_sub['RR'] = min(35, data_sub['RR'])
-          }
+        }
         
         # ProbabilitPO2 computation 
         acc_mu = 3.5
@@ -387,8 +516,67 @@ if (computing == T){
         next
       }
       
+      
       ##############################################################################
-      # 4. Adjusting setting for PIP 
+      # 5. Adjusting setting for PP
+      ## Adjusting = [KG,Age,Sex,NMBA,Sev]
+      ## PP_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT]
+      if (!is.na(PP[i]) && !is.nan(PP[i])){
+        data_sub = PP_given[i, ]
+        data_sub['KG'] = KG[j]
+        data_sub['Age'] = Age[j]
+        data_sub['Sex'] = Sex[j]
+        data_sub['NMBA'] = NMBA_val
+        data_sub['Sev'] = Sev[j]
+        
+        
+        # Intervention seteting 
+        if (!is.na(data_sub['VT'])){ data_sub['VT'] = VT_val }
+        if (!is.na(PP[i])){ 
+          if (PP[i] >= PP_ctrl_limit){
+            PP[i] = PP_val 
+          }
+          else{
+            PP[i] = PP[i]
+          }
+        }
+        if (!is.na(data_sub['PEEP'])){ 
+          sub_FO2 = round(Y_given[i,]['FO2'],1)
+          if (is.nan(sub_FO2) || is.na(sub_FO2)){
+            next
+          }
+          if (sub_FO2 < 0.3){
+            data_sub['PEEP'] = min(PEEP_min, data_sub['PEEP'])
+          }
+          else if (sub_FO2 > 0.9){
+            data_sub['PEEP'] = min(PEEP_max_max, data_sub['PEEP'])
+            data_sub['PEEP'] = max(PEEP_max_min, data_sub['PEEP'])
+          }
+          else if (!is.na(sub_FO2)){
+            data_sub['PEEP'] = PEEPs[which(FiO2s == sub_FO2)]
+          }
+          else{
+            data_sub['PEEP'] = data_sub['PEEP']
+          }
+        }
+        
+        
+        
+        # ProbabilitPO2 computation 
+        acc_mu = 0.8
+        acc_sd = 1.21
+        Model = PP.cond
+        Obs = abs( PP[i]-predict(Model, t(as.matrix(data_sub))) )
+        prob_PP = dlnorm(Obs, meanlog = acc_mu, sdlog = acc_sd )
+      }else{
+        next
+      }
+      
+      
+      
+      
+      ##############################################################################
+      # 6. Adjusting setting for PIP 
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## PIP_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR]
       if (!is.nan(PIP[i])){
@@ -396,7 +584,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -445,9 +633,8 @@ if (computing == T){
       }
       
       
-      
       ##############################################################################
-      # 5. Adjusting setting for MV 
+      # 7. Adjusting setting for MV 
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## MV_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR]
       if (!is.nan(MV[i])){
@@ -455,7 +642,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -510,7 +697,7 @@ if (computing == T){
       
       
       ##############################################################################
-      # 6. Adjusting setting for SO2
+      # 8. Adjusting setting for SO2
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## MV_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,MV]
       if (!is.nan(SO2[i])){
@@ -518,7 +705,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -570,9 +757,61 @@ if (computing == T){
         next
       }
       
-
+      
+      
+      
       ##############################################################################
-      # 7. Adjusting setting for FO2
+      # 9. Adjusting setting for VT
+      ## Adjusting = [KG,Age,Sex,NMBA,Sev]
+      ## VT_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP]
+      
+      if (!is.nan(VT[i])){
+        data_sub = VT_given[i, ]
+        data_sub['KG'] = KG[j]
+        data_sub['Age'] = Age[j]
+        data_sub['Sex'] = Sex[j]
+        data_sub['NMBA'] = NMBA_val
+        data_sub['Sev'] = Sev[j]
+        
+        
+        # Intervention seteting
+        if (!is.na(data_sub['PEEP'])){
+          sub_FO2 = round(Y_given[i,]['FO2'],1)
+          if (is.nan(sub_FO2) || is.na(sub_FO2)){
+            next
+          }
+          if (sub_FO2 < 0.3){
+            data_sub['PEEP'] = min(PEEP_min, data_sub['PEEP'])
+          }
+          else if (sub_FO2 > 0.9){
+            data_sub['PEEP'] = min(PEEP_max_max, data_sub['PEEP'])
+            data_sub['PEEP'] = max(PEEP_max_min, data_sub['PEEP'])
+          }
+          else if (!is.na(sub_FO2)){
+            data_sub['PEEP'] = PEEPs[which(FiO2s == sub_FO2)]
+          }
+          else{
+            data_sub['PEEP'] = data_sub['PEEP']
+          }
+        }
+        if (!is.na(data_sub['RR'])){
+          data_sub['RR'] = max(6,data_sub['RR'])
+          data_sub['RR'] = min(35, data_sub['RR'])
+        }
+        
+        # ProbabilitSO2 computation
+        acc_mu = 1.2
+        acc_sd = 1.5
+        Model = VT.cond
+        Obs = abs( log( abs( VT_val - predict(Model, t(as.matrix(data_sub))) ) ) )
+        prob_VT = dgamma(Obs, shape=acc_mu, rate=acc_sd)
+        # prob_VT = 1 
+      }else{
+        next
+      }
+      
+      ##############################################################################
+      # 10. Adjusting setting for FO2
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## FO2_given = [Age, Sev, NMBA]
       
@@ -581,7 +820,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -621,7 +860,7 @@ if (computing == T){
       }
       
       ##############################################################################
-      # 8. Adjusting setting for PEEP
+      # 11. Adjusting setting for PEEP
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## PEEP_given = [KG, Age, NMBA, Sev, FO2]
       
@@ -630,7 +869,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -671,7 +910,7 @@ if (computing == T){
       
       
       ##############################################################################
-      # 9. Adjusting setting for pH 
+      # 12. Adjusting setting for pH 
       ## Adjusting = [KG,Age,Sex,NMBA,Sev]
       ## pH_given = [KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,PIP,MV,SO2,PCO2]
       if (!is.nan(pH[i])){
@@ -679,7 +918,7 @@ if (computing == T){
         data_sub['KG'] = KG[j]
         data_sub['Age'] = Age[j]
         data_sub['Sex'] = Sex[j]
-        data_sub['NMBA'] = NMBA[j]
+        data_sub['NMBA'] = NMBA_val
         data_sub['Sev'] = Sev[j]
         
         
@@ -727,14 +966,15 @@ if (computing == T){
         next
       }
       
-     
+      
       
       ##############################################################################
       # Adjusting over 
-      prob_numer = log(prob_y) +  log(prob_PCO2) + log(prob_PO2) + log(prob_PIP) 
-      + log(prob_MV) + log(prob_SO2) + log(prob_FO2) + log(prob_PEEP) 
-      + log(prob_pH)
+      prob_numer = log(prob_y) +  log(prob_PCO2) + log(prob_RR) + log(prob_PO2) 
+      + log(prob_PP) + log(prob_PIP) + log(prob_MV) + log(prob_SO2) 
+      + log(prob_VT) + log(prob_FO2) + log(prob_PEEP) + log(prob_pH)
       prob_denom = prob_numer - log(prob_y)
+      # print(c(j, PP[i], RR[i], prob_PP, prob_RR))
       sum_numer = sum_numer + exp(prob_numer)
       sum_denom = sum_denom + exp(prob_denom)
       
@@ -746,20 +986,17 @@ if (computing == T){
       next
     }
     
-    if (prob < 1){
-      round_idx = 3
-      # print(c(round(idx,round_idx),round(i,round_idx),round(prob,round_idx), prob_y, round(Y[i],round_idx)))
-    }else{
-      round_idx = 3
-      # print(c(round(idx), round(sum_numer,round_idx),round(sum_denom,round_idx)))
-      # print(c(round(idx), round(prob_y,round_idx), round(prob_PEEP,round_idx), round(prob_FO2,round_idx), 
-      #         round(prob_FO2_deno,round_idx), round(prob_PEEP_deno,round_idx) ))
-      # print(c(round(idx,round_idx),round(i,round_idx),round(prob,round_idx),prob_y, round(Y[i],round_idx)))
-    }
-    
+    # if (prob < 1){
+    #   round_idx = 3
+    #   print(c(idx,prob))
+    # }else{
+    #   round_idx = 3
+    #   print(c(idx,prob))
+    # }
+    # print(c(idx,prob))
     Probs[idx] = prob
     idx = idx + 1
   }
   avg_survival = round(mean(Probs[which(!is.na(Probs))]),3)
-  print(c("VT,PP",VT_val,PP_val, avg_survival))
+  print(c("NMBA",NMBA_val, avg_survival))
 }
