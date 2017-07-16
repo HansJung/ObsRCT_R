@@ -1,52 +1,43 @@
 library(causaleffect)
 library(igraph)
 
-g_PC = graph.formula( V_T -+ Y, V_T -+ PO2, V_T -+ PCO2, V_T -+ RR, V_T -+ PP, V_T -+ PIP, V_T -+ MV,
-                      PP -+ PIP, PP -+ Y, PP -+ PO2, PP -+ RR,
-                      PIP -+ PCO2, 
-                      PEEP -+ PIP, PEEP -+ MV, PEEP -+ RR, PEEP -+ PO2, PEEP -+ SO2, PEEP -+ PP, PEEP -+ V_T,
-                      MV -+ Y, MV -+ PCO2, MV -+ PEEP, MV -+ SO2, 
-                      RR -+ PO2, RR -+ Y, RR -+ PEEP, RR -+ PIP, RR -+ MV, RR -+ SO2, 
-                      FO2 -+ PEEP, FO2 -+ SO2, FO2 -+ PO2, FO2 -+ PIP, 
-                      NMBA -+ PP, NMBA -+ FO2, NMBA -+ PIP, NMBA -+ Y, NMBA -+ PCO2, NMBA -+ PO2, 
-                      Kg -+ V_T, Kg -+ PP, Kg -+ PEEP, Kg -+ MV, Kg -+ PIP, 
-                      Age -+ Sev, Age -+ PO2, Age -+ PCO2, Age -+ NMBA, Age -+ FO2, Age -+ PEEP, Age -+ PP, 
-                      Sev -+ PO2, Sev -+ FO2, Sev -+ MV, Sev -+ PEEP, Sev -+ PP, 
-                      Sex -+ V_T, Sex -+ PP, Sex -+ MV, Sev -+ SO2, 
-                      SO2 -+ PP, SO2 -+ MV, SO2 -+ Y, SO2 -+ PCO2, SO2 -+ PO2, 
-                      PO2 -+ Y, PO2 -+ PCO2, 
-                      PCO2 -+ PO2, PCO2 -+ pH,
+g_PC = graph.formula( VT -+ PIP, VT -+ PO2, VT -+ PCO2, VT -+ MV, VT -+ Y, 
+                      PP -+ PIP, PP -+ PEEP, PP -+ RR, PP -+ SO2, PP -+ Y, 
+                      PIP -+ VT, PIP -+ PCO2,
+                      PEEP -+ PP, PEEP -+ PIP, PEEP -+ MV, PEEP -+ FO2, PEEP -+ SO2,
+                      MV -+ PCO2, MV -+ Y, 
+                      RR -+ PP, RR -+ MV, 
+                      FO2 -+ SO2, 
+                      NMBA -+ PP, NMBA -+ FO2, NMBA -+ PO2, NMBA -+ Y, 
+                      KG -+ VT, KG -+ PP, KG -+ Sex,
+                      Age -+ FO2, Age -+ NMBA, 
+                      Sev -+ FO2, Sev -+ SO2, Sev -+ PO2, 
+                      Sex -+ VT, Sev -+ PP, Sev -+ MV, Sev -+ KG,
+                      SO2 -+ PCO2, 
+                      PO2 -+ Y,
+                      PCO2 -+ pH, 
                       pH -+ Y
-                    )
-
-g_PC_reduced = graph.formula( V_T -+ Y, V_T -+ PO2, V_T -+ PCO2, V_T -+ RR, V_T -+ PP, V_T -+ PIP, V_T -+ MV,
-                              PP -+ PIP, PP -+ Y, PP -+ PO2, PP -+ RR,
-                              PIP -+ PCO2, 
-                              PEEP -+ PIP, PEEP -+ MV, PEEP -+ RR, PEEP -+ PO2, PEEP -+ SO2, PEEP -+ PP, PEEP -+ V_T,
-                              MV -+ Y, MV -+ PCO2, MV -+ SO2, 
-                              RR -+ PO2, RR -+ Y, RR -+ PIP, RR -+ MV, RR -+ SO2, 
-                              FO2 -+ PEEP, FO2 -+ SO2, FO2 -+ PO2, FO2 -+ PIP, 
-                              NMBA -+ PP, NMBA -+ FO2, NMBA -+ PIP, NMBA -+ Y, NMBA -+ PCO2, NMBA -+ PO2, 
-                              Kg -+ V_T, Kg -+ PP, Kg -+ PEEP, Kg -+ MV, Kg -+ PIP, 
-                              Age -+ Sev, Age -+ PO2, Age -+ PCO2, Age -+ NMBA, Age -+ FO2, Age -+ PEEP, Age -+ PP, 
-                              Sev -+ PO2, Sev -+ FO2, Sev -+ MV, Sev -+ PEEP, Sev -+ PP, 
-                              Sex -+ V_T, Sex -+ PP, Sex -+ MV, Sev -+ SO2, 
-                              SO2 -+ Y, SO2 -+ PCO2, SO2 -+ PO2, 
-                              PO2 -+ Y, PO2 -+ PCO2, 
-                              PCO2 -+ PO2, PCO2 -+ pH,
-                              pH -+ Y
 )
 
-g = g_PC_reduced
-hidden = c(9,10)
+
+
+g = g_PC
+hidden = c(1,6,15,19,23)
+# VT -> PIP
+# PIP ->VT 
+# PP  ->RR 
+# PEEP->PP 
+# RR  ->PP
+
 g = set.edge.attribute(g,"description",hidden,"U")
 
-causal_effect = causal.effect(y="Y",x=c("V_T","PP"),z =c("FO2","PEEP","RR"),G=g, simp=F, steps=F)
-# causal_effect = causal.effect(y="Y",x="NMBA",z =c("V_T", "RR","FO2"),G=g, simp=T)
-# causal_effect = causal.effect(y="Y",x="NMBA",z =NULL,G=g, simp=T)
+causal_effect_VT = causal.effect(y="Y",x=c("VT","PP"),z =c("FO2","RR","PEEP"),G=g, simp=T, steps=F)
+causal_effect_PEEP = causal.effect(y="Y",x="PEEP",z =c("FO2","RR","VT","PP"),G=g, simp=T)
+causal_effect_NMBA = causal.effect(y="Y",x="NMBA",z =c("VT", "RR","FO2","PEEP"),G=g, simp=T)
+
 print(V(g))
 print(E(g))
-print(causal_effect)
+# print(causal_effect)
 print(plot.igraph(g,edge.arrow.size=0.5,edge.curved = T))
   
 
@@ -121,4 +112,22 @@ print(plot.igraph(g,edge.arrow.size=0.5,edge.curved = T))
 #                                   T_B -+ T_O,  #T_B to others 
 #                                   T_A -+ Y, T_A -+ T_O, # T_A to others 
 #                                   T_O -+ Y # Basic--------------------------------// ARDSNet (2000) 
+# )
+
+# g_PC_reduced = graph.formula( V_T -+ Y, V_T -+ PO2, V_T -+ PCO2, V_T -+ RR, V_T -+ PP, V_T -+ PIP, V_T -+ MV,
+#                               PP -+ PIP, PP -+ Y, PP -+ PO2, PP -+ RR,
+#                               PIP -+ PCO2, 
+#                               PEEP -+ PIP, PEEP -+ RR, PEEP -+ PO2, PEEP -+ SO2, PEEP -+ PP, PEEP -+ V_T,
+#                               MV -+ Y, MV -+ PCO2, MV -+ SO2, 
+#                               RR -+ PO2, RR -+ Y, RR -+ PIP, RR -+ MV, RR -+ SO2, 
+#                               FO2 -+ PEEP, FO2 -+ SO2, FO2 -+ PO2, FO2 -+ PIP, 
+#                               NMBA -+ PP, NMBA -+ FO2, NMBA -+ PIP, NMBA -+ Y, NMBA -+ PCO2, NMBA -+ PO2, 
+#                               Kg -+ V_T, Kg -+ PP, Kg -+ PEEP, Kg -+ MV, Kg -+ PIP, 
+#                               Age -+ Sev, Age -+ PO2, Age -+ PCO2, Age -+ NMBA, Age -+ FO2, Age -+ PEEP, Age -+ PP, 
+#                               Sev -+ PO2, Sev -+ FO2, Sev -+ MV, Sev -+ PEEP, Sev -+ PP, 
+#                               Sex -+ V_T, Sex -+ PP, Sex -+ MV, Sev -+ SO2, 
+#                               SO2 -+ Y, SO2 -+ PCO2, SO2 -+ PO2, 
+#                               PO2 -+ Y, PO2 -+ PCO2, 
+#                               PCO2 -+ PO2, PCO2 -+ pH,
+#                               pH -+ Y
 # )

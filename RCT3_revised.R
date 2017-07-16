@@ -254,9 +254,9 @@ if (computing == T){
   N = 8587
   
   ## Variable fixation 
-  NMBA_val = 0
+  NMBA_val = 100
   
-  VT_val = 7 # (6,12)
+  VT_val = 6.7 # (6,12)
   PP_val = 30 # (30,50)
   PP_ctrl_limit = PP_val # (30,50)
   FiO2s = c(0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
@@ -268,7 +268,7 @@ if (computing == T){
   PEEP_max_max = 24   
   
   ## If new 
-  Experiment = F
+  Experiment = T
   
   if (Experiment == T){
     PEEPs = c(12,14,16,20,20,22,22) # New 
@@ -289,7 +289,7 @@ if (computing == T){
     sum_numer = 0
     sum_denom = 0
     
-    for (j in samples){
+    for (j in 1:N){
       # Adjusting setting for Y
       ## Adjusting = [Sex, KG, Sev, Age, NMBA, ]
       ## Y_given = [ KG,Age,Sex,NMBA,Sev,FO2,PEEP,VT,PP,RR,PIP,MV,SO2,PO2,PCO2,pH ]
