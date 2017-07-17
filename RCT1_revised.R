@@ -1,7 +1,7 @@
 setwd("~/Dropbox/Personal/Research/Causal_RCT/Code/ObsRCT")
 source("compute_causal_effect.R")
 source("factor_to_numeric.R")
-
+library(mixtools)
 library(fitdistrplus)
 
 set.seed(100)
@@ -14,12 +14,6 @@ train_FO2 = F
 train_FO2deno = F
 train_NMBA = F
 
-train_PCO2 =F
-train_PO2 = F
-train_MV = F
-train_SO2 = F
-train_PEEP = F
-train_pH = F
 
 df <- read.csv("Data/reduce_final_R.csv")
 ID = df$SUBJECT_ID
@@ -121,13 +115,18 @@ if (fitting == T){
   Diff = Diff[which(!is.na(Diff))]
   
   fit_fun = fitdist(Diff,'norm')
-  # d_FO2 = density(Diff)
-  # descdist(log(Fit), discrete=FALSE)
+  
+  if(train_FO2 == T){
+    FO2_mix_VT = normalmixEM(Diff)
+  }else if(train_FO2deno == T){
+    FO2deno_mix_VT = normalmixEM(Diff)
+  }
+  
 }
 
 # Simplified
 ## PIP: Diff ~ Logis, loc: 0, scale=3.7
-## FO2: Diff ~ GMM, mu1, mu1 = -0.073, FO2_mix
+## FO2: Diff ~ GMM 
 ## FO2_deno: Diff ~ Norm, mean=0, sd = 0.4
 
 
@@ -136,8 +135,8 @@ if (computing == T){
   N = 8587
   
   ## Variable fixation 
-  VT_val = 6 # (6,12)
-  PP_val = 30 # (30,50)
+  VT_val = 12 # (6,12)
+  PP_val = 50 # (30,50)
   PP_ctrl_limit = PP_val # (30,50)
   FiO2s = c(0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
   PEEPs = c(5,8,10,10,12,14,16)
@@ -156,23 +155,44 @@ if (computing == T){
   sum_val = 0
   for (p in samples){
     data_sub = Y_given[p,]
-    
-    PEEP_p = if(!is.na(data_sub['PEEP'])){PEEP_p = data_sub['PEEP']}else{
-      # print(c(p,"PEEP next"))
-      next
-      }
-    RR_p = if(!is.na(data_sub['RR'])){RR_p = data_sub['RR']}else{
-      # print(c(p,"RR next"))
-      next
-    }
+    Y_p = Y[p]
     FO2_p = if(!is.na(data_sub['FO2'])){FO2_p = data_sub['FO2']}else{
       # print(c(p,"FO2 next"))
       next
     }
-    PP_p = if(!is.na(data_sub['PP'])){PP_p = data_sub['PP']}else{
-      # print(c(p,"PP next"))
+    PEEP_p = if(!is.na(data_sub['PEEP'])){
+      sub_FO2 = round(Y_given[p,]['FO2'],1)
+      if (sub_FO2 < 0.3){
+        data_sub['PEEP'] = min(5, data_sub['PEEP'])
+      }
+      else if (sub_FO2 > 0.9){
+        data_sub['PEEP'] = min(24, data_sub['PEEP'])
+        data_sub['PEEP'] = max(18, data_sub['PEEP'])
+      }
+      else if (!is.na(sub_FO2)){
+        data_sub['PEEP'] = PEEPs[which(FiO2s == sub_FO2)]
+      }
+      else{
+        data_sub['PEEP'] = data_sub['PEEP']
+      }
+      PEEP_p = data_sub['PEEP']
+      }else{next}
+    RR_p = if(!is.na(data_sub['RR'])){
+      data_sub['RR'] = max(6,data_sub['RR'])
+      data_sub['RR'] = min(35, data_sub['RR'])
+      RR_p = data_sub['RR']
+      }else{
       next
     }
+    PP_p = if(!is.na(data_sub['PP'])){
+      if (data_sub['PP'] >= PP_ctrl_limit){
+        data_sub['PP'] = PP_val 
+      }
+      else{
+        data_sub['PP'] = data_sub['PP']
+      }
+      PP_p = data_sub['PP']
+      }else{next}
     VT_p = if(!is.na(data_sub['VT'])){VT_p = data_sub['VT']}else{
       VT_p = VT_val
     }
@@ -217,8 +237,8 @@ if (computing == T){
       
     # Compute denominator probability
     Obs_FO2deno = FO2_p -  predict( FO2deno.cond, (as.matrix(cbind(PEEP_p,NMBA_p,Sev_p)) ))
-    prob_FO2deno = FO2deno_mix$lambda[1] * dnorm(Obs_FO2deno, mean=FO2deno_mix$mu[1], sd=FO2deno_mix$sigma[1] ) + 
-      FO2deno_mix$lambda[2] * dnorm(Obs_FO2, mean=FO2deno_mix$mu[2], sd=FO2deno_mix$sigma[2] ) 
+    prob_FO2deno = 0.7912333 * dnorm(Obs_FO2deno, mean= -0.09210143, sd= 0.08222925 ) + 
+      0.2087667 * dnorm(Obs_FO2deno, mean = 0.36315736, sd = 0.12278200 ) 
     prob_FO2deno = prob_FO2deno[[1]]
       
     sum_fn_j = 0
@@ -226,8 +246,8 @@ if (computing == T){
       mu_PIP = predict(PIP.cond, (as.matrix(cbind(PEEP_p,PP_p,NMBA_p,Sev_p))))
       PIP_j = rnorm(n=1,mean=mu_PIP, sd=6.8)
       Obs_FO2 = FO2_p - predict( FO2.cond, (as.matrix(cbind(PIP_j,PEEP_p,PP_p,NMBA_p,Sev_p))) )
-      prob_FO2 = FO2_mix$lambda[1] * dnorm(Obs_FO2, mean=FO2_mix$mu[1], sd=FO2_mix$sigma[1] ) + 
-        FO2_mix$lambda[2] * dnorm(Obs_FO2, mean=FO2_mix$mu[2], sd=FO2_mix$sigma[2] ) 
+      prob_FO2 = 0.8557091 * dnorm(Obs_FO2, mean = -0.07290717, sd = 0.10905512 ) + 
+        0.1442909 * dnorm(Obs_FO2, mean=0.43332773, sd = 0.02717687 ) 
       prob_FO2 = prob_FO2[[1]]
       prob_y = predict( Y.cond, (as.matrix(cbind( RR_p,Sev_p,NMBA_p,PP_p,PEEP_p,VT_p,PIP_j,FO2_p ))) )
       f_n = log(prob_FO2) + log(prob_y)

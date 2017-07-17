@@ -31,8 +31,8 @@ hidden = c(1,6,15,19,23)
 
 g = set.edge.attribute(g,"description",hidden,"U")
 
-causal_effect_VT = causal.effect(y="Y",x=c("VT","PP"),z =c("FO2","RR","PEEP"),G=g, simp=T, steps=F)
-causal_effect_PEEP = causal.effect(y="Y",x="PEEP",z =c("FO2","RR","VT","PP"),G=g, simp=T)
+# causal_effect_VT = causal.effect(y="Y",x=c("VT","PP"),z =c("FO2","RR","PEEP"),G=g, simp=T, steps=F)
+# causal_effect_PEEP = causal.effect(y="Y",x="PEEP",z =c("FO2","RR","VT","PP"),G=g, simp=T)
 causal_effect_NMBA = causal.effect(y="Y",x="NMBA",z =c("VT", "RR","FO2","PEEP"),G=g, simp=T)
 
 print(V(g))
