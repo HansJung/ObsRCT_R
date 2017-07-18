@@ -6,7 +6,7 @@ library(fitdistrplus)
 
 set.seed(123)
 fitting = F
-computing =F
+computing =T
 
 train_Y = F
 train_FO2 = F
@@ -18,6 +18,7 @@ train_PPdeno = F
 
 
 df <- read.csv("Data/reduce_final_R.csv")
+df = subset(df, factor_to_numeric(df$Sev)<=300)
 ID = df$SUBJECT_ID
 KG = factor_to_numeric(df$WEIGHT)
 Age = as.numeric(df$AGE)
@@ -47,7 +48,7 @@ Y = as.numeric(df$SURVIVAL)
 # 1. Build a model for f(Y | Y_given)
 ## Y_given = [ Kg,Age,Sex,NMBA,Sev,FO2,PEEP,V_T,PP,RR,PIP,MV,SO2,PO2,PCO2,pH ]
 if (train_Y == T){
-  param = list(booster="gbtree",eta = 0.05, gamma = 0.5, max_depth = 10, 
+  param = list(booster="gbtree",eta = 0.05, gamma = 0.5, max_depth = 15, 
                subsample = 0.5, lambda=0.5, alpha=0.5, verbose=0)
   nround = 1000
   
@@ -138,9 +139,9 @@ if (train_PPdeno == T){
 
 # 5. Find Fit (example: PEEP)
 if (fitting == T){
-  Model = VTdeno.cond
-  given = VTdeno_given
-  Data = VT
+  Model = FO2deno.cond
+  given = FO2deno_given
+  Data = FO2
   
   Fit = predict(Model,data.matrix(given))
   Diff = Data - Fit
@@ -148,9 +149,9 @@ if (fitting == T){
   
   fit_fun = fitdist(Diff,'norm')
   if(train_FO2 == T){
-    FO2_mix_VT = normalmixEM(Diff)
+    FO2_mix_PEEP = normalmixEM(Diff)
   }else if(train_FO2deno == T){
-    FO2deno_mix_VT = normalmixEM(Diff)
+    FO2deno_mix_PEEP = normalmixEM(Diff)
   }
   # descdist(log(Fit), discrete=FALSE)
 }
@@ -191,13 +192,14 @@ if (computing == T){
     PEEP_max_max = 24   
   }
   
-  sample_N = 300
+  sample_N = 2000
+  samples = sample(1:dim(df)[1], sample_N)
   Nj = 200
   
-  NMBA_N = sample(1:531,sample_N)
-  nonNMBA_N = sample(532:8587,sample_N)
-  samples = c(NMBA_N,nonNMBA_N)
-  Probs = rep(0,2*sample_N)
+  # NMBA_N = sample(1:531,sample_N)
+  # nonNMBA_N = sample(532:8587,sample_N)
+  # samples = c(NMBA_N,nonNMBA_N)
+  # Probs = rep(0,2*sample_N)
   
   idx = 1
   sum_val = 0
@@ -209,7 +211,7 @@ if (computing == T){
       next
     }
     PEEP_p = if(!is.na(data_sub['PEEP'])){
-      sub_FO2 = round(Y_given[i,]['FO2'],1)
+      sub_FO2 = round(Y_given[p,]['FO2'],1)
       if (sub_FO2 < 0.3){
         data_sub['PEEP'] = min(PEEP_min, data_sub['PEEP'])
       }

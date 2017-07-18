@@ -22,7 +22,7 @@ g_PC = graph.formula( VT -+ PIP, VT -+ PO2, VT -+ PCO2, VT -+ MV, VT -+ Y,
 
 
 g = g_PC
-hidden = c(1,6,15,19,23)
+hidden = c(6,15,19,23)
 # VT -> PIP
 # PIP ->VT 
 # PP  ->RR 

@@ -12,10 +12,10 @@ train_Y = F
 train_PIP = F
 train_FO2 = F
 train_FO2deno = F
-train_NMBA = F
 
 
 df <- read.csv("Data/reduce_final_R.csv")
+df = subset(df, factor_to_numeric(df$Sev)<=300)
 ID = df$SUBJECT_ID
 KG = factor_to_numeric(df$WEIGHT)
 Age = as.numeric(df$AGE)
@@ -87,18 +87,6 @@ if (train_FO2deno == T){
   FO2deno.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
 }
 
-## where FO2_given = [Age, Sev, NMBA]
-if (train_NMBA == T){
-  param = list(booster="gbtree",eta = 0.1, gamma = 0, max_depth = 10, 
-               subsample = 0.5, lambda=0, alpha=0, verbose=0)
-  nround = 300
-  NMBA_given = cbind(Sev)
-  Given = NMBA_given[which(!is.na(NMBA))]
-  Data = NMBA[which(!is.na(NMBA))]
-  print("NMBA deno Run!")
-  NMBA.cond = compute_causal_effect(Given,Data,nround,"reg:linear",param)
-}
-
 
 
 
@@ -141,13 +129,13 @@ if (computing == T){
   FiO2s = c(0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
   PEEPs = c(5,8,10,10,12,14,16)
   
-  sample_N = 100
+  sample_N = 200
   Nj = 200
+  samples = sample(1:dim(df)[1], sample_N)
   
-  
-  NMBA_N = sample(1:531,sample_N)
-  nonNMBA_N = sample(532:8587,sample_N)
-  samples = c(NMBA_N,nonNMBA_N)
+  # NMBA_N = sample(1:531,sample_N)
+  # nonNMBA_N = sample(532:8587,sample_N)
+  # samples = c(NMBA_N,nonNMBA_N)
   
   idx = 1
   
@@ -157,7 +145,6 @@ if (computing == T){
     data_sub = Y_given[p,]
     Y_p = Y[p]
     FO2_p = if(!is.na(data_sub['FO2'])){FO2_p = data_sub['FO2']}else{
-      # print(c(p,"FO2 next"))
       next
     }
     PEEP_p = if(!is.na(data_sub['PEEP'])){
